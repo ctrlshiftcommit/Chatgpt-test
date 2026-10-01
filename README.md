@@ -4,72 +4,139 @@ A planned Android voice-assistant app that connects ChatGPT to Android-native re
 
 ## Architecture
 
-The core idea is:
+```text
+┌──────────────────────┐
+│       YOU            │
+│  "Remind me in 2h"   │
+└──────────┬───────────┘
+           │ natural language
+           ▼
+┌──────────────────────┐
+│       ChatGPT        │
+│ intent → structured  │
+│ reminder request     │
+└──────────┬───────────┘
+           │ authenticated API request
+           ▼
+┌──────────────────────┐
+│   Cloudflare API     │
+│ auth • validation    │
+│ routing • sync       │
+└───────┬───────┬──────┘
+        │       │
+        │       └──────────────┐
+        ▼                      ▼
+┌──────────────────┐   ┌──────────────────┐
+│     Supabase     │   │   Android App    │
+│ persistence      │◄──┤ sync + local DB  │
+│ reminder state   │   │                  │
+└──────────────────┘   └────────┬─────────┘
+                                │
+                                │ Android-native
+                                │ scheduling
+                                ▼
+                       ┌──────────────────┐
+                       │  ALARM /         │
+                       │  NOTIFICATION    │
+                       └──────────────────┘
+```
 
-**ChatGPT → Cloudflare → Android app → Android alarm/notification**
+### The key rule
 
-Supabase can be used as persistent storage where useful.
+**Cloudflare does not ring the phone. Android does.**
+
+Cloudflare is the secure bridge between ChatGPT and the Android application. Supabase can provide durable reminder state and synchronization.
 
 ### Responsibilities
 
-- **ChatGPT**
-  - Understand natural-language requests such as: "Remind me in two hours to start studying."
-  - Convert the request into structured reminder data.
-  - Send the structured request to the backend/API.
-
-- **Cloudflare**
-  - Act as the secure bridge/API between ChatGPT and the Android app.
-  - Authenticate requests.
-  - Validate and normalize reminder payloads.
-  - Expose webhooks/API endpoints for the Android client.
-  - Optionally handle scheduled backend jobs, retries, and synchronization.
-  - Never be responsible for the final device alarm.
-
-- **Supabase (optional / likely)**
-  - Store reminders and their state.
-  - Store device/user configuration and synchronization metadata.
-  - Provide persistence if reminders need to survive app restarts or backend restarts.
-
-- **Android app**
-  - Authenticate with the backend.
-  - Receive/synchronize reminder instructions.
-  - Schedule the actual alarm/notification using Android-native scheduling APIs.
-  - Persist locally as needed so reminders remain reliable.
-  - Handle Android notification/alarm permissions and device-specific restrictions.
+| Component | Responsibility |
+|---|---|
+| **ChatGPT** | Understand natural language and produce structured reminder intent |
+| **Cloudflare** | Secure API, authentication, validation, routing, synchronization |
+| **Supabase** | Optional durable reminder/device state |
+| **Android** | Sync reminders and schedule the actual device alarm/notification |
+| **Android OS** | Ultimately fires the scheduled alarm/notification |
 
 ## Example flow
 
-1. User tells ChatGPT: "Remind me in two hours to start studying."
-2. ChatGPT interprets the request and creates structured reminder data.
-3. ChatGPT sends that data to the Cloudflare API.
-4. Cloudflare authenticates and validates the request.
-5. The reminder is persisted/synchronized through Supabase if persistence is enabled.
-6. The Android app receives or syncs the reminder.
-7. Android schedules the local alarm/notification.
-8. At the requested time, Android fires the reminder even though Cloudflare is not directly delivering an alarm to the phone.
+```text
+User
+  │
+  │ "Remind me in two hours to start studying."
+  ▼
+ChatGPT
+  │
+  │ { title, trigger_at, timezone, ... }
+  ▼
+Cloudflare
+  │
+  ├──► validate + authenticate
+  │
+  └──► persist/sync ──► Supabase
+  │
+  ▼
+Android App
+  │
+  │ schedule locally
+  ▼
+Android Alarm / Notification
+  │
+  ▼
+"Time to start studying."
+```
 
 ## Design principles
 
 - Android owns device-level alarms and notifications.
 - Cloudflare is the communication/security layer, not the alarm clock.
 - Keep the API small, explicit, authenticated, and easy for an AI agent to use.
-- Make reminder creation idempotent where possible so retries do not create duplicate alarms.
-- Store stable reminder IDs so ChatGPT/backend/app can refer to the same reminder.
+- Make reminder creation idempotent so retries do not create duplicate alarms.
+- Store stable reminder IDs across ChatGPT, backend, and Android.
 - Design for offline synchronization and Android process/app restarts.
 - Keep secrets and privileged credentials out of the Android client.
 - Start with reminders/alarms; add more assistant actions later.
 
 ## Initial implementation phases
 
-1. Create the Android app shell.
-2. Define the reminder data model and API contract.
-3. Build the Cloudflare API.
-4. Add Supabase persistence if needed.
-5. Add Android authentication and synchronization.
-6. Implement local Android alarm/notification scheduling.
-7. Add create, update, cancel, and list reminder operations.
-8. Test retries, duplicate requests, offline behavior, reboot behavior, and permission failures.
-9. Connect ChatGPT/agent tooling to the API.
+```text
+PHASE 1   Data model + API contract
+   │
+   ▼
+PHASE 2   Cloudflare API
+   │
+   ▼
+PHASE 3   Supabase persistence/sync
+   │
+   ▼
+PHASE 4   Android auth + synchronization
+   │
+   ▼
+PHASE 5   Android-native alarm scheduling
+   │
+   ▼
+PHASE 6   Reminder CRUD + cancellation
+   │
+   ▼
+PHASE 7   ChatGPT / agent integration
+   │
+   ▼
+PHASE 8   Reliability + failure testing
+```
+
+## Reliability cases to test
+
+```text
+                         ┌─ app killed
+                         ├─ app restarted
+                         ├─ network offline
+Reminder created ────────┼─ backend retry
+                         ├─ duplicate sync
+                         ├─ device reboot
+                         └─ permissions denied
+                                  │
+                                  ▼
+                       No duplicate / lost reminder
+```
 
 ## Example reminder payload
 
@@ -84,4 +151,24 @@ Supabase can be used as persistent storage where useful.
 }
 ```
 
-This repository currently documents the architecture and implementation plan.
+## First milestone
+
+Get one complete path working reliably:
+
+```text
+Voice request
+    ↓
+ChatGPT
+    ↓
+Cloudflare
+    ↓
+Android
+    ↓
+Local alarm
+    ↓
+Reminder fires
+```
+
+Only after this path works should additional assistant capabilities be added.
+
+This repository documents the architecture and implementation plan.
