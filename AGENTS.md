@@ -107,3 +107,26 @@ Avoid duplicate alarms when the same reminder is synchronized more than once.
 ChatGPT should express the user's intent and request the backend operation. The Android application is the final authority for scheduling the device alarm.
 
 Before adding unrelated features, keep the first milestone focused on reliable voice-created reminders.
+
+
+## Required Android build skill
+
+Before implementing or repairing the Android application, read and follow the repository's **Build Android Apps** skill:
+
+**[Build Android Apps — Skills/build-android-apps/SKILL.md](https://github.com/ctrlshiftcommit/Skills/blob/main/build-android-apps/SKILL.md)**
+
+The skill is the detailed implementation and verification guide for this project. Use it for native Android architecture, Gradle/Kotlin setup, Compose/XML UI, permissions, persistence, background work, alarms/notifications, device testing, and release builds.
+
+```text
+AGENTS.md
+    │
+    ├── project-specific architecture + constraints
+    │
+    └── Build Android Apps skill
+              │
+              ▼
+       detailed Android
+       implementation + QA
+```
+
+When the skill and this file overlap, preserve the project-specific constraints in this file while using the skill for the detailed Android implementation workflow.
