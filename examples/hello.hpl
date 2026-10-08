@@ -1,7 +1,11 @@
-Create a variable called name.
-Set name to "Shivv".
+VARIABLE name
+name = "Shivv"
 
-If name is "Shivv":
-    show "Hello, Shivv!"
-Otherwise:
-    show "Hello, stranger!"
+VARIABLE age
+age = 16
+
+IF age == 16
+    SHOW "Hello, " 
+    SHOW name
+ELSE
+    SHOW "Hello, stranger!"
