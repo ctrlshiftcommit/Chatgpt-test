@@ -1,69 +1,114 @@
-# Human Programming Language
+# HPL Language Reference
 
-A beginner-friendly programming language that reads like simple English.
+HPL (Human Programming Language) uses short, predictable keywords instead of full English sentences. The goal is code that is easy for a beginner to read and easy for the compiler to parse deterministically.
 
-## Goal
-
-Write instructions instead of traditional programming syntax.
-
-Example:
-
-```text
-Create a section called product.
-Put a button called "Add to cart" inside product.
-Color product #222222.
-Center product.
-
-If the customer clicks the "Add to cart" button,
-show "Product added to cart".
-```
-
-## Grammar
+## Core syntax
 
 ### Variables
 
-```text
-Create a variable called customer name.
-Set customer name to "Shivv".
+Create a variable with the full keyword `VARIABLE`:
+
+```hpl
+VARIABLE name
+name = "Shivv"
+
+SHOW name
+```
+
+Numbers work too:
+
+```hpl
+VARIABLE age
+age = 16
+SHOW age
+```
+
+### Output
+
+Use `SHOW`:
+
+```hpl
+SHOW "Hello, world!"
+SHOW name
 ```
 
 ### Conditions
 
-```text
-If customer enters "buy" in the message field,
-show "Thanks for your order".
-Otherwise,
-show "What would you like to buy?"
+HPL supports compact comparisons:
+
+```hpl
+IF age == 16
+    SHOW "You are 16"
+ELSE
+    SHOW "A different age"
 ```
 
-### Interface
+`!=` means not equal.
 
-```text
-Create a section called product card.
-Put a text called product name inside product card.
-Put a button called "Add to cart" inside product card.
+For readability, the older `is` and `is not` comparison forms are also accepted while the language is evolving.
+
+## UI syntax
+
+UI is part of HPL's language design. The intended syntax is deliberately declarative:
+
+```hpl
+INPUT name "Enter your name"
+BUTTON submit "Submit"
+
+IF submit clicked
+    SHOW name
 ```
 
-### Styling
+The UI keywords describe what the programmer wants; a web backend can later translate them into HTML, CSS, and JavaScript.
 
-```text
-Color product card #222222.
-Color product name #ffffff.
-Center product card.
-Put product name left.
-Put the button right.
+Planned UI keywords include:
+
+- `INPUT` — input field
+- `BUTTON` — clickable button
+- `TEXT` — text element
+- `IMAGE` — image element
+- `SECTION` — container/section
+
+## Styling
+
+The planned styling syntax keeps visual concepts readable:
+
+```hpl
+COLOR product #222222
+CENTER product
+LEFT productName
+RIGHT submit
 ```
 
-## Architecture
+## Design rule
 
-Source code -> Lexer -> Tokens -> Parser -> AST -> Runtime
+HPL is **controlled English**, not free-form English. A line should be understandable to a human without requiring the compiler to guess intent.
 
-The language will use a strict, predictable grammar. It should feel like English without requiring the parser to guess what the programmer means.
+New language features should therefore follow this pattern:
 
-## First milestone
+1. Choose a clear keyword.
+2. Define one deterministic grammar.
+3. Add an example to this document.
+4. Add a parser/runtime test.
+5. Only then expose the feature in the editor.
 
-Build a lexer, parser, AST, and interpreter capable of handling variables, conditions, events, simple UI elements, colors, and positioning.
+## Implementation status
 
-## Status
+Implemented now:
 
-Language design and grammar definition.
+- `VARIABLE`
+- assignment with `=`
+- `SHOW`
+- `IF` / `ELSE`
+- `==` / `!=`
+- legacy `is` / `is not` forms
+
+Designed and documented, but not implemented yet:
+
+- `INPUT`
+- `BUTTON`
+- `TEXT`
+- `IMAGE`
+- `SECTION`
+- styling and positioning
+- UI event handling
