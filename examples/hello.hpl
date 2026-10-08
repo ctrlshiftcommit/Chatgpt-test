@@ -1,0 +1,7 @@
+Create a variable called name.
+Set name to "Shivv".
+
+If name is "Shivv":
+    show "Hello, Shivv!"
+Otherwise:
+    show "Hello, stranger!"
