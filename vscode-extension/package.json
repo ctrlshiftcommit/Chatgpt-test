@@ -1,0 +1,20 @@
+{
+  "name": "human-programming",
+  "displayName": "Human Programming Language",
+  "description": "Language support for Human Programming Language (.hpl) files.",
+  "version": "0.1.0",
+  "publisher": "ctrlshiftcommit",
+  "engines": { "vscode": "^1.90.0" },
+  "categories": ["Programming Languages"],
+  "activationEvents": ["onLanguage:hpl"],
+  "main": "./extension.js",
+  "contributes": {
+    "languages": [{
+      "id": "hpl",
+      "aliases": ["HPL", "Human Programming Language"],
+      "extensions": [".hpl"],
+      "configuration": "./language-configuration.json"
+    }],
+    "commands": [{"command": "hpl.run", "title": "HPL: Run File"}]
+  }
+}
